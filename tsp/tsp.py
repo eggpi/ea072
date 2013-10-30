@@ -1,3 +1,4 @@
+from optparse import OptionParser
 import re
 import sys
 import random
@@ -9,7 +10,7 @@ def read_tsp(path):
     cities = []
     with open(path) as f:
         for line in f:
-            data = re.search("([0-9]*) *([0-9]*.[0-9]*) *([0-9]*.[0-9]*)",line.strip("\r\n"))
+            data = re.search("([0-9]*) *([0-9]*.[0-9]*) *([0-9]*.[0-9]*)", line.strip("\r\n"))
             cities.append([int(data.group(1)), float(data.group(2)), float(data.group(3))])
 
     return cities
@@ -40,49 +41,14 @@ def create_random_solution(cities):
 
 def save_solution(path, solution):
     with open(path, "w") as f:
-        print solution[1]
         f.write("Score: " + str(solution[1]) + "\n")
-        f.write("Hamiltonian Cycle: " + str(solution[0]))
+        f.write("TSP Solution: " + str(solution[0]))
 
-def mutate2(cities, solution):
-    num = 0.3 * len(cities)
-    if num == 0:
-        num = 1
-
-    while num > 0:
-        pos = random.randint(0, len(solution[0]) - 1)
-        pos2 = pos
-
-        # Avoid swaping with himself
-        while pos == pos2:
-            pos2 = random.randint(0, len(solution[0]) - 1)
-    
-        # swap random city
-        city = solution[0][pos]
-        solution[0][pos] = solution[0][pos2]
-        solution[0][pos2] = city
-        
-        num -= 1
-
-        new_dist = calc_total_distance(cities, solution[0])
-        if new_dist < solution[1]:
-            # update distance
-            solution[1] = new_dist
-        else:
-            # unswap if solution was not improved
-            city = solution[0][pos]
-            solution[0][pos] = solution[0][pos2]
-            solution[0][pos2] = city
-
-
-def mutate(cities, solution):
+def mutate(cities, sol):
+    solution = list(sol)
     pos = random.randint(0, len(solution[0]) - 1)
-    pos2 = pos
+    pos2 = random.randint(0, len(solution[0]) - 1)
 
-    # Avoid swaping with himself
-    while pos == pos2:
-        pos2 = random.randint(0, len(solution[0]) - 1)
-    
     # swap random city
     city = solution[0][pos]
     solution[0][pos] = solution[0][pos2]
@@ -98,10 +64,13 @@ def mutate(cities, solution):
         solution[0][pos] = solution[0][pos2]
         solution[0][pos2] = city
 
-def cross_over(cities, s1, s2):
-    cut = random.randint(0, len(s1[0]))
+    return solution
 
-    child = s1[0][:cut]
+def cross_over(cities, s1, s2):
+    cut1 = random.randint(0, len(s1[0]) - 1)
+    cut2 = random.randint(cut1, len(s1[0]) - 1)
+
+    child = s1[0][cut1:cut2]
     for x in s2[0]:
         if x not in child:
             child.append(x)
@@ -109,11 +78,16 @@ def cross_over(cities, s1, s2):
     return [child, calc_total_distance(cities, child)]
 
 def create_next_generation(cities, cur_gen):
-    population = list(cur_gen)
-    for sol in population:
-        mutate2(cities, sol)
-        p1 = random.randint(0, len(population) - 1)
-        sol = cross_over(cities, sol, population[p1])
+    population = [[]]*len(cur_gen)
+    i = 0
+
+    for sol in cur_gen:
+        population[i] = mutate(cities, sol)
+        tmp = cross_over(cities, population[i], 
+                cur_gen[random.randint(0, len(cur_gen)-1)]) 
+        if tmp[1] < population[i][1]:
+            population[i] = tmp
+        i += 1
 
     return population
 
@@ -137,10 +111,10 @@ def save_debug(path, debug):
             f.write("Score: " + str(sol[1][1]) + "\n")
             f.write("Solution: " + str(sol[1][0]) + "\n")
 
-def solve(cities, starting_gens=STARTING_GENS, max_it=MAX_IT):
+def solve(cities, debug_dir, starting_gens=STARTING_GENS, max_it=MAX_IT):
     random.seed()
     population = []
-    debug = []
+    debug = [] #debug = [it_num, solution]
 
     # create initial population
     for i in range(0, starting_gens - 1):
@@ -154,13 +128,32 @@ def solve(cities, starting_gens=STARTING_GENS, max_it=MAX_IT):
         tmp = get_best_sol(next_pop)
 
         if tmp[1] < best:
+            print best, tmp[1]
             debug.append([i+1, list(tmp)])
             best = tmp[1]
 
         population = next_pop
 
-    save_debug(sys.argv[2], debug)
+    save_debug(debug_dir, debug)
 
     return get_best_sol(population)
-    
-save_solution(sys.argv[3], solve(read_tsp(sys.argv[1])))
+
+parser = OptionParser()
+parser.add_option("-i", "--input", action="store", 
+        type="string", dest="input", help="input tsp file")
+parser.add_option("-o", "--output", dest="output", 
+        action="store", type="string", help="output results to file")
+parser.add_option("-d", "--debug", dest="debug", 
+        action="store", type="string", help="outputs debug info to file")
+parser.add_option("-m", "--max_it", dest="max_it", default=MAX_IT,
+        action="store", type="int", help="max number of iterations")
+parser.add_option("-s", "--sg", dest="starting_gen", default=STARTING_GENS,
+        action="store", type="int", help="starting generations")
+
+(options, args) = parser.parse_args()
+
+if len(sys.argv) == 1:
+    parser.print_help()
+    quit()
+
+save_solution(options.output, solve(read_tsp(options.input), options.debug, options.max_it, options.starting_gen))
