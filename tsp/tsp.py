@@ -69,18 +69,18 @@ def mutate(cities, sol):
     return solution
 
 def swap_nearest_neighbors(cities, solution):
-    for i in range(0, len(solution) - 2):
-        city = solution[i]
-        city2 = solution[i+1]
-        city3 = solution[i+2]
+    for i in range(-2, len(solution) - 2):
+        city = solution[0][i]
+        city2 = solution[0][i+1]
+        city3 = solution[0][i+2]
         dab = calc_distance(cities[city][0], cities[city][1], cities[city2][0], cities[city2][1])
         dac = calc_distance(cities[city][0], cities[city][1], cities[city3][0], cities[city3][1])
         dbc = calc_distance(cities[city2][0], cities[city2][1], cities[city3][0], cities[city3][1])
 
         if dac < dab + dbc:
-            tmp = solution[i+1]
-            solution[i+1] = solution[i+2]
-            solution[i+2] = tmp
+            tmp = solution[0][i+1]
+            solution[0][i+1] = solution[0][i+2]
+            solution[0][i+2] = tmp
 
 def cross_over(cities, s1, s2):
     cut1 = random.randint(0, len(s1[0]) - 1)
@@ -101,7 +101,7 @@ def create_next_generation(cities, cur_gen):
 
     for sol in cur_gen:
         population[i] = mutate(cities, sol)
-        swap_nearest_neighbors(cities, population[i])
+        #swap_nearest_neighbors(cities, population[i])
 
         tmp = cross_over(cities, population[i], 
                 cur_gen[random.randint(0, len(cur_gen)-1)]) 
