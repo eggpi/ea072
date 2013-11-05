@@ -1,11 +1,14 @@
 import random
 import sys
+import collections
 
-STARTING_GENERATIONS = 100
-MAX_ITERATIONS = 120
 LOCAL_SEARCH = True
-LOCAL_SEARCH_MIN = 1
-LOCAL_SEARCH_MAX = 5
+MAX_ITERATIONS = 1000
+STARTING_INDIVIDUALS = 1000
+
+# An individual in our solution space.
+# The genome is a binary list where 0 and 1 are the different sets
+Individual = collections.namedtuple("Individual", ("genome", "fitness"))
 
 def read_numbers(path):
     nums = []
@@ -16,153 +19,159 @@ def read_numbers(path):
 
     return nums
 
-def calc_fitness(set1, split):
-    s1 = 0
-    s2 = 0
+def split_sets(genome, numbers):
+    sets = [[], []]
+    for s, n in zip(genome, numbers):
+        sets[s].append(n)
 
-    for i in range(0, split):
-        s1 += set1[i]
+    return sets[0], sets[1]
 
-    for i in range(split, len(set1)):
-        s2 += set1[i]
+def fitness(genome, numbers):
+    s1, s2 = split_sets(genome, numbers)
+    return abs(sum(s1) - sum(s2))
 
-    return int(abs(s1 - s2))
-
-def save_numbers(set1, path):
-
+def save_numbers(ind, path, numbers):
+    s1, s2 = split_sets(ind.genome, numbers)
     with open(path, "w") as f:
-        f.write("Score: " + str(set1[2]) + "\n")
-        print str(set1[2]) + "\n"
-        f.write("Set 1: " + str(set1[0][:set1[1]]) + "\n")
-        f.write("Set 2: " + str(set1[0][set1[1]:]))
+        print >> f, "Fitness: %s" % ind.fitness
+        print >> f, s1
+        print >> f, s2
 
-def create_random_generation(numbers):
-    copy = list(numbers)
-    s1 = []
+def create_random_individual(numbers):
+    genome = []
+    for _ in numbers:
+        genome.append(random.choice((0, 1)))
 
-    split = random.randint(0, len(copy) - 1)
-    while len(copy) > 0:
-        pos = random.randint(0, len(copy) - 1)
-        s1.append(copy[pos])
-        del copy[pos]
+    return Individual(genome, fitness(genome, numbers))
 
-    return [s1, split, calc_fitness(s1, split)]
+def mutate(generation, numbers):
+    # flip a random bit with probability of 0.03 for each individual
+    N = len(numbers)
+    for i, ind in enumerate(generation):
+        if random.random() < 0.05:
+            bitidx = random.randint(0, N-1)
+            genome = ind.genome
+            genome[bitidx] = (genome[bitidx] + 1) % 2
 
-def mutate(current_gen):
-    pos = random.randint(0, len(current_gen[0]) - 1)
+            generation[i] = Individual(genome, fitness(genome, numbers))
 
-    new = calc_fitness(current_gen[0], pos)
-    if current_gen[2] > new:
-        current_gen[1] = pos
-        current_gen[2] = new
+def cross_over(generation, numbers):
+    # use a roulette wheel to pick N/2 pairs of individuals for
+    # crossing over
+    EPS = 1e-6
+    inv_fitness = [1.0 / (EPS + ind.fitness) for ind in generation]
+    total_fitness = sum(inv_fitness)
+    fitness_ratios = [invf / total_fitness for invf in inv_fitness]
+
+    cumsum = [0]
+    for fr in fitness_ratios:
+        fr += cumsum[-1]
+        cumsum.append(fr)
+    cumsum.pop(0)
+
+    to_cross = []
+    for _ in generation:
+        p = random.random()
+        for i, ps in enumerate(cumsum):
+            if ps > p:
+                to_cross.append(generation[i])
+                break
+        else:
+            assert False
+
+    # cross over using a random point
+    next_generation = []
+    for ind1, ind2 in zip(to_cross[::2], to_cross[1::2]):
+        crossing_point = random.randint(0, len(generation))
+
+        genome = ind1.genome[:crossing_point] + ind2.genome[crossing_point:]
+        next_generation.append(Individual(genome, fitness(genome, numbers)))
+
+        genome = ind2.genome[:crossing_point] + ind1.genome[crossing_point:]
+        next_generation.append(Individual(genome, fitness(genome, numbers)))
+
+    assert len(next_generation) == len(generation)
+    return next_generation
+
+def create_next_generation(generation, numbers):
+    next_generation = cross_over(generation, numbers)
+    mutate(next_generation, numbers)
 
     if LOCAL_SEARCH:
-        neigh = random.randint(LOCAL_SEARCH_MIN, LOCAL_SEARCH_MAX)
-        start = current_gen[1] - neigh
-        end = current_gen[1] + neigh
+        for indidx, ind in enumerate(next_generation):
+            s1, s2 = split_sets(ind.genome, numbers)
+            sum1, sum2 = sum(s1), sum(s2)
 
-        if start < 0:
-            start = 0
-        if end > len(current_gen[0]):
-            end = len(current_gen[0])
+            diff = sum1 - sum2
+            if diff > 0:
+                bigger_set = s1
+            else:
+                bigger_set = s2
 
-        for i in range(start, end):
-            new = calc_fitness(current_gen[0], i)
-            if current_gen[2] > new:
-                current_gen[1] = i
-                current_gen[2] = new
+            # find the biggest number we can move from the
+            # set with largest sum to the set with lowest sum
+            # to make the difference smaller
+            diff = abs(diff)
+            bigger_set.sort()
+            for nidx in range(len(bigger_set) - 1):
+                if bigger_set[nidx + 1] > diff / 2:
+                    break
 
-def cross_over(gen, current_gen):
-    gen2 = current_gen[random.randint(0, len(current_gen[0]) - 1)]
-  
-    new = calc_fitness(gen[0], (gen[1] + gen2[1]) / 2)
-    if new < gen[2]:
-        gen[1] = (gen[1] + gen2[1]) / 2
-        gen[2] = new
+            n = bigger_set[nidx]
+            if n > diff / 2:
+                continue
 
-    if LOCAL_SEARCH:
-        neigh = random.randint(LOCAL_SEARCH_MIN, LOCAL_SEARCH_MAX)
-        start = gen[1] - neigh
-        end = gen[1] + neigh
+            gidx = numbers.index(n)
 
-        if start < 0:
-            start = 0
-        if end > len(gen[0]):
-            end = len(gen[0])
+            genome = ind.genome
+            genome[gidx] = (genome[gidx] + 1) % 2
 
-        for i in range(start, end):
-            new = calc_fitness(gen[0], i)
-            if gen[2] > new:
-                gen[1] = i
-                gen[2] = new
+            new_fitness = fitness(genome, numbers)
+            assert new_fitness <= ind.fitness
+            next_generation[indidx] = Individual(genome, new_fitness)
 
-def generate_next_gen(gen, current_gen):
-    prob = random.uniform(0, 1)
+    return next_generation
 
-    #if prob <= 0.12:
-    #mutate(gen)
-    #mutate(gen)
-    cross_over(gen, current_gen)
-    #cross_over(gen, current_gen)
-    mutate(gen)
-    #elif prob <= 0.24:
-    #    cross_over(gen, current_gen)
-    #elif prob <= 0.8:
-    #    mutate(gen)
-    #    cross_over(gen, current_gen)
-    #else:
-    #    cross_over(gen, current_gen)
-    #    mutate(gen)
+def get_best_individual(generation):
+    best = Individual([], float("inf"))
+    for ind in generation:
+        if ind.fitness < best.fitness:
+            best = ind
 
-    return gen
-
-def get_best_score(generations):
-    best = float("inf")
-    index = 0
-    i = 0
-
-    for g in generations:
-        if g[2] < best:
-            best = g[2]
-            index = i
-        i += 1
-
-    return index
+    assert best.genome
+    return best
 
 def save_debug_info(debug, path):
     with open(path, "w") as f:
         for d in debug:
             f.write("Iteration: " + str(d[1]) + " Score: " + str(d[0]) + "\n")
 
-def solve(numbers, starting_gens=STARTING_GENERATIONS, max_it=MAX_ITERATIONS):
+def solve(numbers, starting_inds = STARTING_INDIVIDUALS, max_it=MAX_ITERATIONS):
     best = -1
-    best_gen = []
     generation = []
     random.seed()
 
     debug = []
 
     # Create starting random generation
-    for i in range(0, starting_gens):
-        generation.append(create_random_generation(numbers))
+    for i in range(0, starting_inds):
+        generation.append(create_random_individual(numbers))
 
-    # Store the best result from the first generation
-    best_gen = generation[get_best_score(generation)]
-    debug.append([best_gen[2], 0])
-
+    # Iterate while keeping track of the best individual
+    best_individual = get_best_individual(generation)
     for i in range(0, max_it):
-        next_generation = []
-        for gen in generation:
-            next_generation.append(generate_next_gen(gen, generation))
-       
-        new_best = get_best_score(next_generation)
-        if next_generation[new_best][2] < best_gen[2]:
-            best_gen = next_generation[new_best]
-            debug.append([best_gen[2], i + 1])
+        next_generation = create_next_generation(generation, numbers)
+        next_best = get_best_individual(next_generation)
+        if next_best.fitness < best_individual.fitness:
+            best_individual = next_best
+        generation = next_generation
+        debug.append([best_individual.fitness, i + 1])
+        print >> sys.stderr, "\rGeneration %s" % (i + 1),
 
-    return best_gen, debug
+    print >> sys.stderr
+    return best_individual, debug
 
 numbers = read_numbers(sys.argv[1])
 best, debug = solve(numbers)
 save_debug_info(debug, sys.argv[2])
-save_numbers(best, sys.argv[3])
+save_numbers(best, sys.argv[3], numbers)
