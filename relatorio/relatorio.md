@@ -16,9 +16,9 @@ Nossa abordagem aplicou uma técnica conhecida de mineração de textos, o [mode
 
 DESCREVER EXERCÍCIO 2 AQUI
 
-O Exercício 3 abordava o [Problema da Partição][wiki-partition], conhecido por ser NP-Completo, sob o ponto de vista da computação evolutiva. Desenvolvemos um algoritmo com e sem busca local, que foi aplicado a uma instância grande fornecida pelo professor.
+O Exercício 3 abordava o [Problema da Partição][wiki-partition], conhecido por ser NP-Completo, sob o ponto de vista da computação evolutiva. Desenvolvemos um algoritmo com e sem busca local, que foi aplicado a um conjunto de números fornecido pelo professor, de forma a buscar uma bipartição do conjunto que minimizasse a diferença entre as somas dos elementos das duas partes.
 
-[wikip-partition]: https://en.wikipedia.org/wiki/Partition_problem
+[wiki-partition]: https://en.wikipedia.org/wiki/Partition_problem
 
 DESCREVER OS DEMAIS EXERCÍCIOS E SUAS RESOLUÇÕES
 
@@ -91,7 +91,83 @@ Foi possível assim obter informações interessantes e um agrupamento razoável
 
 # Exercício 3
 
+O algoritmo evolutivo desenvolvido para o Problema da Partição no Exercício 3 pode ser expresso de forma concisa em pseudocódigo. Em alto nível, o espaço do problema é explorado através da geração sucessiva de gerações a partir de um número inicial de indivíduos (1000, em nossos testes), até um número máximo de iterações (também 1000 em nossos experimentos).
 
+~~~
+generation = create_initial_generation()
+best_individual = get_best_individual(generation)
+
+repeat for max_it iterations:
+	next_generation = create_next_generation(generation)
+	next_best = get_best_individual(next_generation)
+
+	if next_best is better than best_individual:
+		best_individual = next_best
+	generation = next_generation
+~~~~
+
+Cada indivíduo representa uma possível solução, e é codificado por um vetor binário que dá, para cada número, o conjunto a que ele pertence na bipartição. Logo, para um indivíduo representado por 1001, a bipartição separa o primeiro e o último números dos dois outros. O _fitness_ do indivíduo é dado pela diferença entre as somas dos números em cada conjunto da bipartição; dessa forma, um _fitness_ menor é melhor.
+
+A subrotina `create_initial_generation` simplesmente gera um conjunto de indivíduos aleatórios, e a subrotina `get_best_individual` atravessa os indivíduos de uma geração comparando seu _fitness_ e retorna aquele com menor valor.
+
+A subrotina `create_next_generation` possui o pseudocódigo abaixo.
+
+~~~
+create_next_generation(generation):
+	next_generation = cross_over(generation)
+	mutate(next_generation)
+	local_search(next_generatio)
+
+	return next_generation
+~~~
+
+A subroutine `cross_over` implementa a reprodução de indivíduos. São escolhidos N indivíduos para reprodução, onde N é o tamanho da geração, usando o algoritmo de _Roulette Wheel_, em que indivíduos são escolhidos aleatoriamente com reposição com probabilidades proporcionais a seu fitness (ou seja, indivíduos mais aptos têm maior probabilidade de serem escolhidos). Esses indivíduos são tomados em pares e cruzados usando um ponto de corte aleatório.
+
+~~~
+cross_over(generation):
+	cross_individuals = roulette_wheel_choice(generation)
+	for parent1 and parent2 consecutive in cross_individuals:
+		crossing_point = random index between 0 and length(individual)
+		next_generation += parent1[:crossing_point] + parent2[crossing_point:]
+		next_generation += parent2[:crossing_point] + parent1[crossing_point:]
+~~~ 
+
+A subrotina `mutate` simplesmente atravessa toda a geração e, para cada indivíduo, altera um bit aleatório com probabilidade 0.05.
+
+Finalmente, a subrotina `local_search` implementa uma busca local: para cada um dos indivíduos, dados dos dois subconjuntos determinados por ele, busca-se naquele de maior soma o maior número que se pode passar para o de menor soma de forma a diminuir a diferença entre eles (e, portanto, melhorar o _fitness_ do indivíduo). Caso isso seja possível, essa troca é feita e o indivíduo é atualizado.
+
+~~~
+local_search(generation):
+	for individual in generation:
+		let s1 and s2 be subsets in the bipartition determined by the individual
+		let bigger_set be the subset with largest element sum
+		let fitness be the fitness of the individual
+
+		bigger_set = sort(bigger_set)
+		for i = 0 to length(individual) - 1:
+			if bigger_set[i+1] > fitness / 2:
+				break
+
+		n = bigger_set[i]
+		if n > fitness / 2:
+			continue
+
+		flip in individual the bit corresponding to n
+~~~
+
+Esse algoritmo foi executado 32 vezes com e sem busca local sobre os números fornecidos pelo professor. Para as execuções com busca local, o melhor resultado obtido foi um _fitness_ de 15, enquanto que sem busca local o melhor _fitness_ foi de 2275.
+
+A Figura 2 ilustra a evolução do _fitness_ ao longo das gerações na melhor execução com busca local.
+
+![Evolução do fitness com busca local](../numbers/fitness-evol-local.png)
+
+A busca convergiu para o valor 15 após apenas 13 iterações. Nota-se que, embora a busca local tenha sido bastante eficaz em acelerar a convergência do algoritmo, nem ela nem os mecanismos de mutação e crossing over foram capazes de encontrar soluções melhores fora desse vale.
+
+A Figura 3 ilustra a evolução do _fitness_ na melhor execução sem busca local.
+
+![Evolução do fitness sem busca local](../numbers/fitness-evol-nolocal.png)
+
+O melhor _fitness_ nesse caso foi obtido após apenas 3 iterações, novamente evidenciando a dificuldade do algoritmo em sair de vales no espaço de busca.
 
 [spam]: http://csmining.org/index.php/spam-email-datasets-.html
 [rweka]: http://cran.r-project.org/web/packages/RWeka/index.html
