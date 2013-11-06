@@ -2,9 +2,9 @@ import random
 import sys
 import collections
 
-LOCAL_SEARCH = True
+LOCAL_SEARCH = False
 MAX_ITERATIONS = 1000
-STARTING_INDIVIDUALS = 1000
+STARTING_INDIVIDUALS = 100
 
 # An individual in our solution space.
 # The genome is a binary list where 0 and 1 are the different sets

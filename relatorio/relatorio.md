@@ -91,7 +91,7 @@ Foi possível assim obter informações interessantes e um agrupamento razoável
 
 # Exercício 3
 
-O algoritmo evolutivo desenvolvido para o Problema da Partição no Exercício 3 pode ser expresso de forma concisa em pseudocódigo. Em alto nível, o espaço do problema é explorado através da geração sucessiva de gerações a partir de um número inicial de indivíduos (1000, em nossos testes), até um número máximo de iterações (também 1000 em nossos experimentos).
+O algoritmo evolutivo desenvolvido para o Problema da Partição no Exercício 3 pode ser expresso de forma concisa em pseudocódigo. Em alto nível, o espaço do problema é explorado através da geração sucessiva de gerações a partir de um número inicial de indivíduos (100, em nossos testes), até um número máximo de iterações (1000 em nossos experimentos). O tamanho da geração permanece constante ao longo da execução do algoritmo.
 
 ~~~
 generation = create_initial_generation()
@@ -122,6 +122,8 @@ create_next_generation(generation):
 ~~~
 
 A subroutine `cross_over` implementa a reprodução de indivíduos. São escolhidos N indivíduos para reprodução, onde N é o tamanho da geração, usando o algoritmo de _Roulette Wheel_, em que indivíduos são escolhidos aleatoriamente com reposição com probabilidades proporcionais a seu fitness (ou seja, indivíduos mais aptos têm maior probabilidade de serem escolhidos). Esses indivíduos são tomados em pares e cruzados usando um ponto de corte aleatório.
+
+Uma observação interessante sobre o método _Roulette Wheel_ é que ele não trouxe resultados bons com gerações grandes, de 1000 indivíduos -- nesse caso, o algoritmo rapidamente convergia para um vale não muito bom e não conseguia mais sair dele. Presumivelmente isso ocorre porque, com muitos indivíduos, para vários deles as probabilidades de escolha são muito próximas, e apenas aqueles com fitness realmente muito bons são consistentemente escolhidos várias vezes para reprodução, causando baixa mutabilidade na geração seguinte.
 
 ~~~
 cross_over(generation):
@@ -155,19 +157,17 @@ local_search(generation):
 		flip in individual the bit corresponding to n
 ~~~
 
-Esse algoritmo foi executado 32 vezes com e sem busca local sobre os números fornecidos pelo professor. Para as execuções com busca local, o melhor resultado obtido foi um _fitness_ de 15, enquanto que sem busca local o melhor _fitness_ foi de 2275.
+Esse algoritmo foi executado 32 vezes com e sem busca local sobre os números fornecidos pelo professor. Para as execuções com busca local, o melhor resultado obtido foi um _fitness_ de 5, enquanto que sem busca local o melhor _fitness_ foi de 4199.
 
-A Figura 2 ilustra a evolução do _fitness_ ao longo das gerações na melhor execução com busca local.
+A Figura 2 ilustra a evolução do _fitness_ ao longo das gerações na melhor execução com busca local. A convergência ocorreu após a iteração 400, e observam-se claramente os saltos causados pelo processo de busca.
 
 ![Evolução do fitness com busca local](../numbers/fitness-evol-local.png)
-
-A busca convergiu para o valor 15 após apenas 13 iterações. Nota-se que, embora a busca local tenha sido bastante eficaz em acelerar a convergência do algoritmo, nem ela nem os mecanismos de mutação e crossing over foram capazes de encontrar soluções melhores fora desse vale.
 
 A Figura 3 ilustra a evolução do _fitness_ na melhor execução sem busca local.
 
 ![Evolução do fitness sem busca local](../numbers/fitness-evol-nolocal.png)
 
-O melhor _fitness_ nesse caso foi obtido após apenas 3 iterações, novamente evidenciando a dificuldade do algoritmo em sair de vales no espaço de busca.
+A convergência aqui ocorre já na iteração 5, e observa-se a dificuldade do método sem busca local de escapar de vales.
 
 [spam]: http://csmining.org/index.php/spam-email-datasets-.html
 [rweka]: http://cran.r-project.org/web/packages/RWeka/index.html
