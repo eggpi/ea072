@@ -20,7 +20,10 @@ O Exercício 3 abordava o [Problema da Partição][wiki-partition], conhecido po
 
 [wiki-partition]: https://en.wikipedia.org/wiki/Partition_problem
 
-DESCREVER OS DEMAIS EXERCÍCIOS E SUAS RESOLUÇÕES
+O Exercício 4 é o [Problema do Caixeiro Viajante][wiki-tsp], um clássico problema de otimização combinatória e de complexidade NP-Difícil. Foi desenvolvido um algorítmo com e sem busca local, aplicado a dois conjuntos de teste: o fornecido pelo professor e o circuito [berlin52][data-berlin52].
+
+[wiki-tsp]: http://en.wikipedia.org/wiki/Travelling_salesman_problem
+[data-berlin52]: http://www.iwr.uni-heidelberg.de/groups/comopt/software/TSPLIB95/tsp/berlin52.tsp.gz
 
 # Resultados
 
@@ -172,3 +175,103 @@ O melhor _fitness_ nesse caso foi obtido após apenas 3 iterações, novamente e
 [spam]: http://csmining.org/index.php/spam-email-datasets-.html
 [rweka]: http://cran.r-project.org/web/packages/RWeka/index.html
 [nigerian]: https://en.wikipedia.org/wiki/Nigerian_prince
+
+# Exercício 4
+
+Para resolver o Problema do Caixeiro Viajante, utilizou-se um Algorítmo Genético cujo pseudo-código encontra-se a seguir:
+
+~~~
+cur_gen = create_initial_generation(vertices)
+best_solution = get_best_solution(cur_generation)
+
+repeat for max_it iterations:
+    next_gen = create_next_generation(vertices, cur_gen)
+    next_best = get_best_solution(next_gen)
+
+    if next_best is better than best_solution:
+        best_solution = next_best
+    cur_gen = next_gen
+~~~
+
+Um indivíduo de uma geração é representado por uma lista de vértices que compõe um ciclo hamiltoniano. Inicialmente executamos a subrotina `create_initial_generation`, rotina esta que cria aleatoriamente um ciclo hamiltoniano. Como o grafo é completo, qualquer combinação de vértices sem repetição é uma solução válida. Logo em seguida, chamamos a subrotina `get_best_individual` que retorna o indivíduo de melhor score da geração atual. 
+
+Para criar a próxima geração, utilizamos três abordagens. Para cada solução da geração atual, com probabilidade 0.05, aplicamos o operador de mutação, que troca aleatoriamente dois vertices de posição e calcula o novo fitness. Se a solução melhorou, então a mantemos, caso contrário destrocamos os vértices.
+
+Seja M um indíduo mutado gerado pelo passo anterior do algorítmo. Aplicamos o operador de cross-over em M e um indivíduoP aleatório da geração atual(de elementos não mutados). O cross-over seleciona um sub-conjunto aleatório de M e completa, em ordem de aparição, com os vértices que estão em P e não estão em M.
+
+Por fim, aplicamos um algorítmo de busca local que visa trocar um vértice com seus dois vizinhos imediatos se puder haver um ganho com isto. Sejam três vértices consecutivos u, v e w e suas respectivas distância Duv, Dvw e Duw. Os vértices v e w são trocados se, e somente se, Duw > Duv + Dvw.
+
+~~~
+create_next_generation(vertices, cur_gen):
+    next_gen = []
+    for each solution s in cur_gen:
+        p = random float between 0 and 1
+        if p <= 0.05:
+            mutated = mutate(s)
+        else:
+            mutated = s
+        offspring = cross_over(vertices, mutated, random solution in cur_gen)
+
+        if offspring is better than mutated:
+            next_gen = next_gen + offspring
+        else:
+            next_gen = next_gen + mutated
+        
+    return next_gen
+~~~
+
+~~~
+mutate(solution):
+    i = random index between 0 and length(solution)
+    j = random index between 0 and length(solution)
+
+    new_sol = swap_vertices(solution, i, j)
+
+    if score(new_sol) < score(solution):
+        swap_vertices(solution, i, j)
+        new_sol = solution
+
+    return new_sol
+~~~
+
+~~~
+cross_over(vertices, s1, s2):
+    cut1 = random index between 0 and length(s1)
+    cut2 = random index between cut1 + 1 and length(s1)
+
+    offspring = s1[cut1:cut2]
+    for each vertex v in s2:
+        if v not in offspring:
+            offspring = offspring + v
+
+    return offspring
+~~~
+
+~~~
+local_search(solution):
+    for each vertex v in solution:
+        u = ancestor(v)
+        w = successor(v)
+
+        duv = distance(u,v)
+        duw = distance(u,w)
+        dvw = distance(v,w)
+
+        if duw < duv + dvw:
+            solution = swap(solution, v, w)
+
+    return solution
+~~~
+
+Abaixo temos a análise do circuito berlin52 com e sem busca local. De acordo com o site de [instâncias do TSP][comopt], o valor ótimo para o circuito berlin52 é 7542. Pegando o melhor resultado de 30 execuções, com 1000 indivíduos inicialmente e iterando 1000 vezes, obtivemos que com a busca local ativada, a melhor solução encontrada foi de 7675. Com os mesmos parâmetros, mas com a busca local desativada, a melhor solução encontrada foi de 7544. Como ambas as soluções são próximas do ótimo, o pior desempenho do algorítmo com busca local pode ser explicado pelo fato de que ele tende a convergir para mínimos mais rapidamente e os operadores de mutação e cross-over não conseguiram retirá-lo 
+do vale.
+
+[comopt]: http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/STSP.html
+
+![Evolução do fitness sem busca local para o circuito berlin52](../tsp/fitness-nolocal.jpeg)
+![Evolução do fitness com busca local para o circuito berlin52](../tsp/fitness-local.jpeg)
+
+Para o circuito fornecido pelo professor, utilizando os mesmos parâmetros anteriores, obtivemos que com busca local, a melhor solução obtida é 874. Sem busca local, obtivemos 874. 
+
+![Evolução do fitness sem busca local para o circuito do professor](../tsp/fitness-p-nolocal.jpeg)
+![Evolução do fitness com busca local para o circuito do professor](../tsp/fitness-p-local.jpeg)

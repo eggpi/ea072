@@ -100,7 +100,10 @@ def create_next_generation(cities, cur_gen):
     i = 0
 
     for sol in cur_gen:
-        population[i] = mutate(cities, sol)
+        if random.uniform(0, 1) <= 0.05:
+            population[i] = mutate(cities, sol)
+        else:
+            population[i] = sol
         #swap_nearest_neighbors(cities, population[i])
 
         tmp = cross_over(cities, population[i], 
@@ -109,7 +112,7 @@ def create_next_generation(cities, cur_gen):
             population[i] = tmp
         #population[i] = mutate(cities, sol)
 
-        #swap_nearest_neighbors(cities, population[i])
+        swap_nearest_neighbors(cities, population[i])
         #population[i] = mutate(cities, sol)
         i += 1
 
@@ -147,14 +150,16 @@ def solve(cities, debug_dir, starting_gens=STARTING_GENS, max_it=MAX_IT):
     debug.append([0, list(get_best_sol(population))])
     best = debug[0][1][1]
 
+    print best
+
     for i in range(0, max_it):
         next_pop = create_next_generation(cities, population)
         tmp = get_best_sol(next_pop)
 
         if tmp[1] < best:
-            print best, tmp[1]
             debug.append([i+1, list(tmp)])
             best = tmp[1]
+        print best
 
         population = next_pop
 
