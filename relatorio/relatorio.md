@@ -10,11 +10,13 @@ Este relatório contém os resultados de cinco exercícios práticos diferentes 
 
 O Exercício 1 pedia o desenvolvimento e aplicação de um método de análise de textos em inglês, de forma a extrair alguma informação interessante de um corpo de textos cuja análise seria de outra forma impraticável.
 
-Nossa abordagem aplicou uma técnica conhecida de mineração de textos, o [modelo de espaço vetorial][tf-idf], a um conjunto de emails de spam disponível publicamente, de forma a identificar aqueles que possuem características em comum. Tal análise tem aplicação prática devido à forma como o texto de emails de spam é frequentemente modificado de formas sutis, visando a enganar filtros existentes -- uma vez identificadas as relações de proximidade entre conjuntos de emails indesejados, é possível desenvolver técnicas mais refinadas para tratar aquele conjunto.
+Nossa abordagem aplicou uma técnica conhecida de mineração de textos, o [modelo de espaço vetorial][tf-idf], a um conjunto de emails de spam disponível publicamente, de forma a identificar aqueles que possuem características em comum. Tal análise tem aplicação prática devido à forma como o texto de emails de spam é frequentemente modificado de formas sutis, visando a enganar filtros existentes -- uma vez identificadas as relações de proximidade entre um conjunto de emails indesejados, é possível desenvolver técnicas mais refinadas para tratar aquele conjunto.
 
 [tf-idf]: http://doi.acm.org/10.1145/361219.361220
 
-O Exercício 2 aborda a aproximação de funções R1 -> R1 e R3 -> R1. Utilizando o software [Eureqa][sw-eureqa] e de posse de algumas amostras (com e sem ruído), o grupo alimentou o software Eureqa para obter aproximações para algumas funções escolhidas.
+O Exercício 2 aborda a aproximação de funções $\mathbb{R}^{1} \rightarrow \mathbb{R}^{1}$ e $\mathbb{R}^{3} \rightarrow \mathbb{R}^{1}$. Utilizando o software [Eureqa][sw-eureqa] e de posse de algumas amostras (com e sem ruído), o grupo alimentou o software Eureqa para obter aproximações para algumas funções escolhidas.
+
+[sw-eureqa]: http://creativemachines.cornell.edu/eureqa
 
 O Exercício 3 abordava o [Problema da Partição][wiki-partition], conhecido por ser NP-Completo, sob o ponto de vista da computação evolutiva. Desenvolvemos um algoritmo com e sem busca local, que foi aplicado a um conjunto de números fornecido pelo professor, de forma a buscar uma bipartição do conjunto que minimizasse a diferença entre as somas dos elementos das duas partes.
 
@@ -31,8 +33,8 @@ O Exercício 4 é o [Problema do Caixeiro Viajante][wiki-tsp], um clássico prob
 
 O algoritmo desenvolvido no Exercício 1 foi implementado na linguagem R e executa sobre o corpo de emails de entrada os seguintes passos:
 
-- Cada email é lido e dividido em palavras com o auxílio da biblioteca [RWeka][rweka]
-- Algumas palavras muito comuns (stopwords) são filtradas;
+- Cada email é lido e dividido em palavras com o auxílio da biblioteca [RWeka][rweka], formando um _bag of words_ para aquele email;
+- Algumas palavras muito comuns (_stopwords_) em inglês são filtradas;
 - Alguns caracteres comuns em emails, e outros que não costumam fazer parte de palavras, como > e ", são filtrados das palavras;
 - As palavras passam por um processo de _stemming_, novamente usando a biblioteca RWeka, para reduzir palavras semelhantes a uma raiz comum;
 - Computa-se um dicionário global contendo todas as palavras de todos os emails;
@@ -41,7 +43,9 @@ O algoritmo desenvolvido no Exercício 1 foi implementado na linguagem R e execu
 - Cada email é então descrito por um _feature vector_ dado pelo produto interno entre a linha correspondente a ele na matriz tf e o vetor idf;
 - Os _feature vectors_ são agrupados usando o algorithm k-means com distância Euclidiana.
 
-Na última etapa, testamos vários valores de k para o algoritmo k-means, de 1 a 100, e escolhemos o valor 15 segundo o Método do Cotovelo [elbow], conforme ilustrado na Figura 1. O erro é definido como a soma dos quadrados das distâncias de cada vetor ao centro de seu cluster.
+Na última etapa, testamos vários valores de k para o algoritmo k-means, de 1 a 100, e escolhemos o valor 15 segundo o [Método do Cotovelo][elbow], conforme ilustrado na Figura 1. O erro é definido como a soma dos quadrados das distâncias de cada vetor ao centro de seu cluster.
+
+[elbow]: https://en.wikipedia.org/wiki/Determining_the_number_of_clusters_in_a_data_set#The_Elbow_Method
 
 Esse algoritmo foi aplicado à parte do conjunto de treinamento classificada como spam do dataset [CSDMC2010][spam], em um total de 1378 emails. 
 
@@ -94,7 +98,7 @@ Foi possível assim obter informações interessantes e um agrupamento razoável
 
 # Exercício 2
 
-Inicialmente o grupo escolheu um mapeamento simples R1 -> R1 com uma amostragem pequena e sem ruídos para entender o funcionamento do Eureqa. A função escolhida é f(x) = 3.5x + 5. Com a amostragem contida na tabela a seguir, o Eureqa obteve como resposta g(x) = 3.5x + 4.99.
+Inicialmente o grupo escolheu um mapeamento simples $\mathbb{R}^{1} \rightarrow \mathbb{R}^{1}$ com uma amostragem pequena e sem ruídos para entender o funcionamento do Eureqa. A função escolhida é $f(x) = 3.5x + 5$. Com a amostragem contida na tabela a seguir, o Eureqa obteve como resposta $g(x) = 3.5x + 4.99$.
 
 x           y = f(x)
 --------    -------------
@@ -109,9 +113,9 @@ x           y = f(x)
 9           36.5
 10          40
 
-Table: Amostragem sem ruídos para f(x) = 3.5x + 5.
+Table: Amostragem sem ruídos para $f(x) = 3.5x + 5$.
 
-A seguir, testamos um mapeamento R3 -> R1, f(x,y,z) = x*y + z -1. Com 10 amostragens e sem ruído, o Eureqa obteve como resulta f(x,y,z) = x*y + z - 0.99. A tabela abaixo contém o valor dos mapeamentos.
+A seguir, testamos um mapeamento $\mathbb{R}^{1} \rightarrow \mathbb{R}^{1}$, $f(x,y,z) = xy + z -1$. Com 10 amostragens e sem ruído, o Eureqa obteve como resulta $f(x,y,z) = xy + z - 0.99$. A tabela abaixo contém o valor dos mapeamentos.
 
 \begin{table}
 \centering
@@ -130,12 +134,10 @@ x & y & z & f(x,y,z)\\
 9 & 4 & 4.5 & 39.5\\
 10 & 5 & 5 & 54\\
 \end{tabular}
-\caption{Amostragem da função f(x,y,z) = x*y + z - 1}
+\caption{Amostragem da função $f(x,y,z) = xy + z - 1$}
 \end{table}
 
-Utilizando a mesma função, adicionamos ruído à variável x. O mapeamento encontrado pelo Eureqa é f(x,y,z) = x*y + z - 0.977. 
-
-Finalmente, testamos uma função mais complexa com o Eureqa. A função utilizada foi f(x,y,z) = x*y*z + cos(x)*sin(x) + y*y - z. Com 10 amostras, o Eureqa obteve como solução f(x,y,z) = x*y*z + y*y - z + 0.0433. 
+Utilizando a mesma função, adicionamos ruído aleatório a $x$ com distribuição uniforme no intervalo de valore da variável. O mapeamento encontrado pelo Eureqa é $f(x,y,z) = x*y + z - 0.977$. Nota-se assim que o ruído introduzido pouco influenciou a saída do programa Eureqa.
 
 Observa-se que mesmo com um pequeno conjunto de amostras e ruído, o software Eureqa foi capaz de aproximar satisfatoriamente mesmo funções mais complexas.
 
@@ -156,7 +158,7 @@ repeat for max_it iterations:
 	generation = next_generation
 ~~~~
 
-Cada indivíduo representa uma possível solução, e é codificado por um vetor binário que dá, para cada número, o conjunto a que ele pertence na bipartição. Logo, para um indivíduo representado por 1001, a bipartição separa o primeiro e o último números dos dois outros. O _fitness_ do indivíduo é dado pela diferença entre as somas dos números em cada conjunto da bipartição; dessa forma, um _fitness_ menor é melhor.
+Cada indivíduo representa uma possível solução, e é codificado por um vetor binário que dá, para cada número, o conjunto a que ele pertence na bipartição. Logo, para um conjunto de entrada de 4 números, um indivíduo representado por 1001 representa a bipartição que separa o primeiro e o último números dos dois outros. O _fitness_ do indivíduo é dado pela diferença entre as somas dos números em cada conjunto da bipartição; dessa forma, um _fitness_ menor é melhor.
 
 A subrotina `create_initial_generation` simplesmente gera um conjunto de indivíduos aleatórios, e a subrotina `get_best_individual` atravessa os indivíduos de uma geração comparando seu _fitness_ e retorna aquele com menor valor.
 
@@ -171,7 +173,7 @@ create_next_generation(generation):
 	return next_generation
 ~~~
 
-A subroutine `cross_over` implementa a reprodução de indivíduos. São escolhidos N indivíduos para reprodução, onde N é o tamanho da geração, usando o algoritmo de _Roulette Wheel_, em que indivíduos são escolhidos aleatoriamente com reposição com probabilidades proporcionais a seu fitness (ou seja, indivíduos mais aptos têm maior probabilidade de serem escolhidos). Esses indivíduos são tomados em pares e cruzados usando um ponto de corte aleatório.
+A subrotina `cross_over` implementa a reprodução de indivíduos. São escolhidos N indivíduos para reprodução, onde N é o tamanho da geração, usando o algoritmo de _Roulette Wheel_, em que indivíduos são escolhidos aleatoriamente com reposição com probabilidades proporcionais a seu _fitness_ (ou seja, indivíduos mais aptos têm maior probabilidade de serem escolhidos). Esses indivíduos são tomados em pares e cruzados usando um ponto de corte aleatório.
 
 Uma observação interessante sobre o método _Roulette Wheel_ é que ele não trouxe resultados bons com gerações grandes, de 1000 indivíduos -- nesse caso, o algoritmo rapidamente convergia para um vale não muito bom e não conseguia mais sair dele. Presumivelmente isso ocorre porque, com muitos indivíduos, para vários deles as probabilidades de escolha são muito próximas, e apenas aqueles com fitness realmente muito bons são consistentemente escolhidos várias vezes para reprodução, causando baixa mutabilidade na geração seguinte.
 
@@ -192,7 +194,7 @@ Finalmente, a subrotina `local_search` implementa uma busca local: para cada um 
 local_search(generation):
 	for individual in generation:
 		let s1 and s2 be subsets in the bipartition determined by the individual
-		let bigger_set be the subset with largest element sum
+		let bigger_set be the subset (s1 or s2) with largest element sum
 		let fitness be the fitness of the individual
 
 		bigger_set = sort(bigger_set)
@@ -211,11 +213,11 @@ Esse algoritmo foi executado 32 vezes com e sem busca local sobre os números fo
 
 A Figura 2 ilustra a evolução do _fitness_ ao longo das gerações na melhor execução com busca local. A convergência ocorreu após a iteração 400, e observam-se claramente os saltos causados pelo processo de busca.
 
-![Evolução do fitness com busca local](../numbers/fitness-evol-local.png)
+![Evolução do fitness com busca local no Exercício 3](../numbers/fitness-evol-local.png)
 
 A Figura 3 ilustra a evolução do _fitness_ na melhor execução sem busca local.
 
-![Evolução do fitness sem busca local](../numbers/fitness-evol-nolocal.png)
+![Evolução do fitness sem busca local no Exercício 3](../numbers/fitness-evol-nolocal.png)
 
 A convergência aqui ocorre já na iteração 5, e observa-se a dificuldade do método sem busca local de escapar de vales.
 
@@ -244,9 +246,9 @@ Um indivíduo de uma geração é representado por uma lista de vértices que co
 
 Para criar a próxima geração, utilizamos três abordagens. Para cada solução da geração atual, com probabilidade 0.05, aplicamos o operador de mutação, que troca aleatoriamente dois vertices de posição e calcula o novo fitness. Se a solução melhorou, então a mantemos, caso contrário destrocamos os vértices.
 
-Seja M um indíduo mutado gerado pelo passo anterior do algorítmo. Aplicamos o operador de cross-over em M e um indivíduoP aleatório da geração atual(de elementos não mutados). O cross-over seleciona um sub-conjunto aleatório de M e completa, em ordem de aparição, com os vértices que estão em P e não estão em M.
+Seja M um indíduo mutado gerado pelo passo anterior do algoritmo. Aplicamos o operador de cross-over em M e um indivíduo P aleatório da geração atual(de elementos não mutados). O cross-over seleciona um sub-conjunto aleatório de M e completa, em ordem de aparição, com os vértices que estão em P e não estão em M.
 
-Por fim, aplicamos um algorítmo de busca local que visa trocar um vértice com seus dois vizinhos imediatos se puder haver um ganho com isto. Sejam três vértices consecutivos u, v e w e suas respectivas distância Duv, Dvw e Duw. Os vértices v e w são trocados se, e somente se, Duw > Duv + Dvw.
+Por fim, aplicamos um algoritmo de busca local que visa trocar um vértice com seus dois vizinhos imediatos se puder haver um ganho com isto. Sejam três vértices consecutivos u, v e w e suas respectivas distância $D_{uv}$, $D_{vw}$ e $D_{uw}$. Os vértices v e w são trocados se, e somente se, $D_{uw} > D_{uv} + D_{vw}$.
 
 ~~~
 create_next_generation(vertices, cur_gen):
@@ -311,7 +313,7 @@ local_search(solution):
     return solution
 ~~~
 
-Abaixo temos a análise do circuito berlin52 com e sem busca local. De acordo com o site de [instâncias do TSP][comopt], o valor ótimo para o circuito berlin52 é 7542. Pegando o melhor resultado de 30 execuções, com 1000 indivíduos inicialmente e iterando 1000 vezes, obtivemos que com a busca local ativada, a melhor solução encontrada foi de 7675. Com os mesmos parâmetros, mas com a busca local desativada, a melhor solução encontrada foi de 7544. Como ambas as soluções são próximas do ótimo, o pior desempenho do algorítmo com busca local pode ser explicado pelo fato de que ele tende a convergir para mínimos mais rapidamente e os operadores de mutação e cross-over não conseguiram retirá-lo do vale. As Figuras 4 e 5 mostram o comportamento do _fitness_ através das gerações.
+Abaixo temos a análise do circuito berlin52 com e sem busca local. De acordo com a [TSPLIB][comopt], o valor ótimo para o circuito berlin52 é 7542. Pegando o melhor resultado de 30 execuções, com 1000 indivíduos inicialmente e iterando 1000 vezes, obtivemos que com a busca local ativada, a melhor solução encontrada foi de 7675. Com os mesmos parâmetros, mas com a busca local desativada, a melhor solução encontrada foi de 7544. Como ambas as soluções são próximas do ótimo, o pior desempenho do algoritmo com busca local pode ser explicado pelo fato de que ele tende a convergir para mínimos mais rapidamente e os operadores de mutação e _cross-over_ não conseguiram retirá-lo do vale. As Figuras 4 e 5 mostram o comportamento do _fitness_ através das gerações.
 
 [comopt]: http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/STSP.html
 
@@ -345,7 +347,7 @@ repeat for max_it iterations:
     cur_gen = next_gen
 ~~~
 
-Um indivíduo de uma geração é representado por uma matriz de inteiros, cujos valores vão de 1 até x^2, onde x é o número de linhas do quadrado mágico. Inicialmente executamos a subrotina `create_initial_generation`, rotina esta que cria aleatoriamente uma matriz de inteiros no intervalo [1, x^2]. A subrotina `get_best_individual` retorna o indivíduo com melhor score, calculado somando-se a diferença de todas as colunas, linhas e diagonais principais e o número mágico, isto é:
+Um indivíduo de uma geração é representado por uma matriz de inteiros, cujos valores vão de $1$ até $x^{2}$, onde $x$ é o número de linhas do quadrado mágico. Inicialmente executamos a subrotina `create_initial_generation`, que cria aleatoriamente uma matriz de inteiros no intervalo desejado. A subrotina `get_best_individual` retorna o indivíduo com melhor score, calculado somando-se a diferença de todas as colunas, linhas e diagonais principais e o número mágico, isto é:
 
 ~~~
 calc_fitness(solution, magic_number):
@@ -378,11 +380,11 @@ sum_diags(solution, magic_number):
     return score
 ~~~
 
-A criação da próxima geração se dá através de três dispositivos. Com probabilidade 0.05, aplicamos o operador de mutação. Este operador realiza a troca de posição aleatóriamente entre dois elementos da matriz. Caso a solução melhore, mantemos como está, caso contrário, desfazemos a troca.
+A criação da próxima geração se dá através de três dispositivos. Com probabilidade 0.05, aplicamos o operador de mutação. Este operador realiza a troca de posição aleatoriamente entre dois elementos da matriz. Caso a solução melhore, mantemos como está, caso contrário, desfazemos a troca.
 
-Aplicamos, então, o operador de cross-over, que combina um sub-conjunto de colunas do primeiro indivíduo com um sub-conjunto de colunas do segundo indivíduo. Se o fitness melhorou, então a solução é adicionada a nova geração. Se o fitness não melhorou, então adicionamos o melhor dentre os dois pais.
+Aplicamos, então, o operador de _cross-over_, que combina um subconjunto de colunas do primeiro indivíduo com um subconjunto de colunas do segundo indivíduo. Se o _fitness_ melhorou, então a solução é adicionada a nova geração. Se o _fitness_ não melhorou, então adicionamos o melhor dentre os dois pais.
 
-Uma busca local é aplicada. Com probabilidade 0.5 aplicamos ela às linhas, com probabilidade 0.5 aplicamos ela às colunas. Trocamos elementos adjacentes dois a dois de todas as colunas/linhas do indivíduo, sempre verificando se a solução recebe melhoria e destrocando, caso não haja.
+A busca local é aplicada com probabilidade 0.5 às linhas, e 0.5 às colunas. Trocamos elementos adjacentes dois a dois de todas as colunas/linhas do indivíduo, sempre verificando se a solução recebe melhoria e destrocando, caso não haja.
 
 ~~~
 create_next_generation(cur_gen, magic_number):
@@ -450,11 +452,14 @@ local_search_cols(solution, magic_number):
     return solution
 ~~~
 
-Seguindo o mesmo modelo dos testes anteriores, o algorítmo genético foi executado com uma população inicial de 1000 indivíduos por 1000 iterações. O quadrado mágico analisado possui tamanho 10. Foram realizadas 30 repetições. Com busca local, obtivemos que a melhor solução foi de 34. Sem busca local, obtivemos que a melhor foi de 239. Vale ressaltar que não há garantia de que o quadrado mágico possui solução com os números inicialmente dispostos.
+Seguindo o mesmo modelo dos testes anteriores, o algoritmo genético foi executado com uma população inicial de 1000 indivíduos por 1000 iterações. O quadrado mágico analisado possui tamanho 10. Foram realizadas 30 repetições. Com busca local, obtivemos que a melhor solução foi de 34. Sem busca local, obtivemos que a melhor foi de 239. Vale ressaltar que não há garantia de que o quadrado mágico possui solução com os números inicialmente dispostos.
 
 ![Evolução do fitness sem busca local](../magic_square/fitness.jpeg)
 
 ![Evolução do fitness com busca local](../magic_square/fitness-local.jpeg)
 
-Notamos que desta vez o algorítmo converge muito mais rapidamente para um mínimo local, e pode-se
-ver que há uma forte resistência em sair do mesmo.
+Notamos que desta vez o algorítmo converge muito mais rapidamente para um mínimo local, e pode-se ver que há uma forte resistência em sair dele.
+
+# Conclusão
+
+Na medida em que foram encontradas soluções aproximadas razoáveis para instâncias problemas computacionalmente difíceis, pode-se considerar que este trabalho explorou com sucesso o ferramental de computação evolutiva e mineração de textos.
